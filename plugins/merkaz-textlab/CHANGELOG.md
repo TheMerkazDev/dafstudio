@@ -35,6 +35,24 @@ Release notes from earlier versions are in `README.md` ("What changed in ...").
   privacy fixes, and the Sefaria host restriction with HTTP mocked. Run against 0.3.1 code, 8 of
   its tests fail. Run against 0.3.2, all pass.
 
+### Not done: Merkaz Community group membership
+
+TextLab still calls BuddyPress directly: `groups_is_user_member()` in `MTL_DB::access_role()` and
+`MTL_REST::projects()`, and `bp_core_new_nav_item()` on `bp_setup_nav`. Every call is guarded by
+`function_exists`. It was **not** switched to the `merkaz_community_is_group_member` filter,
+because the change is not safe as a small edit:
+
+- `mtl_projects.buddy_group_id` stores **BuddyPress** group IDs.
+- Merkaz Community's BuddyPress migrator creates groups with **new** IDs, and records the old
+  ones in its internal `LegacyMap`. No public filter exposes that map.
+- Passing a stored BuddyPress ID to `merkaz_community_is_group_member` would therefore ask about
+  an unrelated group, and could show a project to the wrong people.
+
+What it needs: either a cross-plugin mapping hook in Merkaz Community (for example
+`merkaz_community_legacy_group_id`), or an additive TextLab migration that writes the new IDs into
+a new column. Without BuddyPress the current behaviour fails closed: group-visibility projects
+are visible only to their owner and named members.
+
 ### Capability review (documented, no change)
 
 On activation, and again whenever `mtl_cap_version` differs from `MTL_VERSION`,

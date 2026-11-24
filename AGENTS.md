@@ -104,10 +104,14 @@ reviewed migration.
 - Daf Studio's privacy exporter and eraser (`daf-studio`) must keep covering sheets and revisions.
 - The project's group visibility must fail closed. A user who cannot be shown to be a group
   member is not one.
-- BuddyPress is not installed on the target site and must not be required. TextLab asks the
-  `merkaz_community_is_group_member` filter (Merkaz Community, see `INTERFACES.md`) first and
-  falls back to `groups_is_user_member()` only when that filter has no callbacks. Do not add a
-  BuddyPress shim.
+- BuddyPress is not installed on the target site and must not be required. TextLab 0.3.2 still
+  calls `groups_is_user_member()` directly, guarded by `function_exists`. Without BuddyPress, a
+  project whose visibility is `group` is visible only to its owner and named members. Moving to
+  `merkaz_community_is_group_member` (see `INTERFACES.md`) is **blocked**. The reason is that
+  `mtl_projects.buddy_group_id` holds BuddyPress group IDs, while Merkaz Community assigns new
+  group IDs (`LegacyMap`). Passing an old ID to the new filter would check the wrong group. Do not
+  add a BuddyPress shim, and do not wire the filter in until an ID mapping exists (see the
+  TextLab CHANGELOG).
 
 ## Hebrew fidelity
 
