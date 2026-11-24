@@ -1,0 +1,20 @@
+# Line endings. The imported plugin files were already LF-only when imported (checked with
+# `grep -rl $'\r'`), so this rule changes no committed bytes. It keeps new files LF.
+* text=auto eol=lf
+
+*.php  text eol=lf diff=php
+*.js   text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+*.xml  text eol=lf
+*.dist text eol=lf
+*.sh   text eol=lf
+
+*.zip  binary
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.pdf  binary

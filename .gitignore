@@ -1,0 +1,23 @@
+# Build output (release ZIPs are attached to releases, not committed)
+/dist/
+
+# Dependencies and tool caches
+vendor/
+node_modules/
+.phpunit.result.cache
+.phpunit.cache/
+
+# Local configuration and secrets: never commit
+wp-config.php
+wp-tests-config*.php
+.env
+.env.*
+*.sql
+*.sql.gz
+
+# Editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
