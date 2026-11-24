@@ -26,6 +26,15 @@ Release notes from earlier versions are in `README.md` ("What changed in ...").
 - `assets/app.js`: the collaborator suggestions send `project_id` and use the user ID as the option
   value, and member rows show the display name and user ID in place of the email.
 
+### Tests
+
+- Added a PHPUnit integration suite (`tests/`, `phpunit.xml.dist`). It is not shipped in the ZIP.
+  It covers activation and the capability grants, anonymous rejection on every route, cross-user
+  access (IDOR) on every project route for a user who holds all 15 capabilities but no project
+  role, annotation ownership, the public-visibility exception, the user-search and member-list
+  privacy fixes, and the Sefaria host restriction with HTTP mocked. Run against 0.3.1 code, 8 of
+  its tests fail. Run against 0.3.2, all pass.
+
 ### Capability review (documented, no change)
 
 On activation, and again whenever `mtl_cap_version` differs from `MTL_VERSION`,

@@ -3,6 +3,14 @@
 All notable changes to this plugin. Versions match the `Version:` header and `DAF_STUDIO_VERSION`.
 Release notes from earlier versions are in `readme.txt` under `== Changelog ==`.
 
+## Unreleased (repository only, no plugin code change)
+
+- Added a PHPUnit integration suite (`tests/`, `phpunit.xml.dist`). It is not shipped in the ZIP.
+  It covers activation, anonymous rejection on every route, cross-user access (IDOR) on every
+  sheet route, share-token hashing, the 30-day expiry, revocation and the Pro downgrade, the
+  free-plan quota, a byte-for-byte pointed-Hebrew round-trip, and the Sefaria host, URL rejection,
+  cache and rate limit, with HTTP mocked. The suite needed no change to plugin code.
+
 ## 0.4.0 (imported)
 
 - Imported unchanged into `TheMerkazDev/dafstudio` from the operator's upload
