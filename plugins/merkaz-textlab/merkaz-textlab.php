@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Merkaz TextLab
  * Description: A Sefaria-connected biblical text annotation, outlining, translation, collaboration, import, and publishing workbench for WordPress/BuddyPress.
- * Version: 0.3.1
+ * Version: 0.3.2
  * Author: Merkaz TextLab
  * License: GPL-2.0-or-later
  * Text Domain: merkaz-textlab
@@ -10,7 +10,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'MTL_VERSION', '0.3.1' );
+define( 'MTL_VERSION', '0.3.2' );
 define( 'MTL_FILE', __FILE__ );
 define( 'MTL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'MTL_URL', plugin_dir_url( __FILE__ ) );

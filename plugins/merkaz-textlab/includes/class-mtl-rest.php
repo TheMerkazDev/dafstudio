@@ -107,10 +107,16 @@ class MTL_REST {
             },
         ) );
 
+        // Collaborator suggestions. Only a manager of the given project may search, and only
+        // people who already share a project with the searcher are returned (ID + display name).
         register_rest_route( self::NS, '/users/search', array(
             'methods' => 'GET',
             'callback' => array( __CLASS__, 'user_search' ),
-            'permission_callback' => function() { return MTL_Capabilities::user_can( 'mtl_collaborate' ); },
+            'permission_callback' => array( __CLASS__, 'can_search_users' ),
+            'args' => array(
+                'project_id' => array( 'required' => true, 'type' => 'integer', 'minimum' => 1 ),
+                'q' => array( 'required' => false, 'type' => 'string' ),
+            ),
         ) );
 
         foreach ( array( 'text','ref','versions','related','links' ) as $endpoint ) {
@@ -132,13 +138,18 @@ class MTL_REST {
         return MTL_DB::role_can_manage( $role ) && MTL_Capabilities::user_can( 'mtl_collaborate' );
     }
     public static function can_own_project( $request ) { return 'owner' === MTL_DB::access_role( (int) $request['id'] ); }
+    public static function can_search_users( $request ) {
+        if ( ! is_user_logged_in() ) { return false; }
+        $project_id = (int) $request['project_id'];
+        if ( ! $project_id ) { return false; }
+        return MTL_DB::role_can_manage( MTL_DB::access_role( $project_id ) ) && MTL_Capabilities::user_can( 'mtl_collaborate' );
+    }
 
     public static function me() {
         $user = wp_get_current_user();
         return rest_ensure_response( array(
             'id' => $user->ID,
             'display_name' => $user->display_name,
-            'email' => $user->user_email,
             'features' => MTL_Capabilities::feature_map( $user->ID ),
             'pdf' => MTL_PDF::status(),
         ) );
@@ -439,7 +450,8 @@ class MTL_REST {
         global $wpdb;
         $id = (int) $request['id'];
         $rows = $wpdb->get_results( $wpdb->prepare(
-            'SELECT m.*,u.display_name,u.user_email,u.user_login FROM ' . MTL_DB::table( 'project_members' ) . ' m LEFT JOIN ' . $wpdb->users . ' u ON u.ID=m.user_id WHERE m.project_id=%d ORDER BY m.created_at',
+            // Never expose user_email or user_login over REST; ID + display name identify a person.
+            'SELECT m.id,m.project_id,m.user_id,m.role,m.invited_by,m.created_at,m.updated_at,u.display_name FROM ' . MTL_DB::table( 'project_members' ) . ' m LEFT JOIN ' . $wpdb->users . ' u ON u.ID=m.user_id WHERE m.project_id=%d ORDER BY m.created_at',
             $id
         ), ARRAY_A );
         return rest_ensure_response( $rows );
@@ -520,25 +532,38 @@ class MTL_REST {
         return self::members( $request );
     }
 
+    /**
+     * Suggest collaborators without disclosing who has an account.
+     *
+     * Returns at most 12 users as { id, display_name }, never email or login. Candidates are only
+     * people who already share at least one TextLab project with the searcher (as owner or named
+     * member). Matching is a case-insensitive substring of the display name. Anyone else can still
+     * be added by typing their exact email, username or user ID into POST /projects/{id}/members.
+     */
     public static function user_search( $request ) {
-        $search = sanitize_text_field( $request->get_param( 'q' ) );
-        if ( strlen( $search ) < 2 ) { return rest_ensure_response( array() ); }
-        $query = new WP_User_Query( array(
-            'number' => 12,
-            'search' => '*' . $search . '*',
-            'search_columns' => array( 'user_login','user_nicename','user_email','display_name' ),
-            'fields' => array( 'ID','display_name','user_email','user_login' ),
-        ) );
-        $rows = array();
-        foreach ( $query->get_results() as $user ) {
-            $rows[] = array(
-                'id' => (int) $user->ID,
-                'display_name' => $user->display_name,
-                'email' => $user->user_email,
-                'login' => $user->user_login,
-            );
+        global $wpdb;
+        $search = trim( sanitize_text_field( (string) $request->get_param( 'q' ) ) );
+        if ( function_exists( 'mb_strlen' ) ? mb_strlen( $search, 'UTF-8' ) < 2 : strlen( $search ) < 2 ) { return rest_ensure_response( array() ); }
+        $me = get_current_user_id();
+        $projects = MTL_DB::table( 'projects' );
+        $members = MTL_DB::table( 'project_members' );
+
+        // Projects the searcher owns or is a named member of.
+        $mine = "SELECT id FROM $projects WHERE owner_user_id = %d UNION SELECT project_id FROM $members WHERE user_id = %d";
+        $sql = "SELECT DISTINCT u.ID, u.display_name FROM {$wpdb->users} u
+            WHERE u.ID <> %d
+              AND ( u.ID IN ( SELECT m.user_id FROM $members m WHERE m.project_id IN ( $mine ) )
+                 OR u.ID IN ( SELECT p.owner_user_id FROM $projects p WHERE p.id IN ( $mine ) ) )
+              AND u.display_name LIKE %s
+            ORDER BY u.display_name ASC
+            LIMIT 12";
+        $rows = $wpdb->get_results( $wpdb->prepare( $sql, $me, $me, $me, $me, $me, '%' . $wpdb->esc_like( $search ) . '%' ), ARRAY_A );
+
+        $out = array();
+        foreach ( (array) $rows as $row ) {
+            $out[] = array( 'id' => (int) $row['ID'], 'display_name' => (string) $row['display_name'] );
         }
-        return rest_ensure_response( $rows );
+        return rest_ensure_response( $out );
     }
 
     public static function revisions( $request ) {

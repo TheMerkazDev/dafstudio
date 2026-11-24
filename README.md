@@ -5,7 +5,7 @@ Source for two WordPress plugins used on **the-merkaz.org**, a Jewish learning a
 | Plugin | Path | Version | Production status |
 |---|---|---|---|
 | **Daf Studio** | `plugins/daf-studio/` | 0.4.0 | **Active on production.** Treat as live code. |
-| **Merkaz TextLab** | `plugins/merkaz-textlab/` | 0.3.1 | **Inactive.** 0.3.1 must not be reactivated (it leaks user emails). |
+| **Merkaz TextLab** | `plugins/merkaz-textlab/` | 0.3.2 (imported as 0.3.1) | **Inactive.** Do not reactivate 0.3.1, which leaks user emails. 0.3.2 needs review and staging sign-off. |
 
 - **Daf Studio** is an editor for bilingual (Hebrew and English) source sheets laid out in a Vilna-style
   page. Sheets are private to their owner and have a revision history. A Pro user can share a sheet
@@ -23,8 +23,10 @@ is a byte-identical import, so later changes can be reviewed as diffs. Each plug
 
 - Daf Studio: imported unchanged. Defects found in review are listed under "Known issues" in
   `plugins/daf-studio/CHANGELOG.md`. They are **not** fixed here because the plugin is live.
-- TextLab 0.3.1: imported unchanged. Its `/users/search` route returns the email address and login
-  of any user. Do not activate it until that is fixed; see `plugins/merkaz-textlab/CHANGELOG.md`.
+- TextLab 0.3.2: no REST route returns email addresses or logins any more. User search is limited
+  to project managers and to people who already share a project with them. The capability grants
+  were reviewed and are documented, but not changed. See `plugins/merkaz-textlab/CHANGELOG.md`.
+  It still needs review and a staging sign-off before anyone activates it.
 
 ## Test
 
